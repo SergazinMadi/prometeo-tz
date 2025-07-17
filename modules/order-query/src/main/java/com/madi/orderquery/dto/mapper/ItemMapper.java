@@ -1,7 +1,7 @@
 package com.madi.orderquery.dto.mapper;
 
-import com.madi.ordercommand.db.entity.Item;
-import com.madi.ordercommand.dto.dto.ItemDto;
+import com.madi.orderquery.db.entity.Item;
+import com.madi.orderquery.dto.dto.ItemDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.ReportingPolicy;

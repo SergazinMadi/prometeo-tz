@@ -1,36 +1,52 @@
-package com.madi.ordercommand.service.impl;
+package com.madi.orderquery.service.handler;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.madi.common.dto.event.OrderEvent;
-import com.madi.ordercommand.db.entity.Item;
-import com.madi.ordercommand.db.entity.Order;
-import com.madi.ordercommand.db.repository.ItemRepository;
-import com.madi.ordercommand.db.repository.OrderRepository;
-import com.madi.ordercommand.dto.dto.ItemDto;
-import com.madi.ordercommand.dto.dto.OrderDto;
-import com.madi.ordercommand.dto.mapper.ItemMapper;
-import com.madi.ordercommand.dto.mapper.OrderMapper;
-import com.madi.ordercommand.service.OrderService;
+import com.madi.orderquery.db.entity.Item;
+import com.madi.orderquery.db.entity.Order;
+import com.madi.orderquery.db.repository.ItemRepository;
+import com.madi.orderquery.db.repository.OrderRepository;
+import com.madi.orderquery.dto.dto.ItemDto;
+import com.madi.orderquery.dto.dto.OrderDto;
+import com.madi.orderquery.dto.mapper.ItemMapper;
+import com.madi.orderquery.dto.mapper.OrderMapper;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Service;
+import org.springframework.kafka.annotation.KafkaHandler;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Service
+
+@Component
 @RequiredArgsConstructor
-public class OrderServiceImpl implements OrderService {
-    private final ItemRepository itemRepository;
+@KafkaListener(topics = "orders")
+public class KafkaConsumerService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
+    private final ItemRepository itemRepository;
     private final ItemMapper itemMapper;
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
-    public UUID createOrder(OrderDto orderDto){
+    @KafkaHandler
+    public void handleOrderEvent(OrderEvent orderEvent){
+        OrderDto orderDto = objectMapper.convertValue(orderEvent.payload(), OrderDto.class);
+        switch (orderEvent.eventType()) {
+            case "OrderCreated":
+                handleCreated(orderDto);
+                break;
+            case "OrderUpdated":
+                handleUpdated(orderDto, orderEvent.orderId());
+                break;
+        }
+
+    }
+
+    private void handleCreated(OrderDto orderDto){
         List<ItemDto> itemDtos = orderDto.getItems();
         Order order = orderRepository.save(orderMapper.toEntity(orderDto));
         List<Item> itemList = itemRepository.saveAll(itemDtos.stream().map(i -> {
@@ -40,16 +56,10 @@ public class OrderServiceImpl implements OrderService {
         }).collect(Collectors.toList()));
         OrderDto savedOrder = orderMapper.toDto(order);
         savedOrder.setItems(itemList.stream().map(itemMapper::toDto).collect(Collectors.toList()));
-        kafkaTemplate.send("orders", new OrderEvent(
-                "OrderCreated",
-                order.getId(),
-                savedOrder,
-                Instant.now()));
-        return order.getId();
     }
 
-    @Transactional
-    public OrderDto updateOrder(OrderDto orderDto, UUID orderId){
+
+    private void handleUpdated(OrderDto orderDto, UUID orderId){
         Order order = orderRepository.findById(orderId).orElseThrow(EntityNotFoundException::new);
         List<ItemDto> itemDtos = orderDto.getItems();
         order.setCurrency(orderDto.getCurrency());
@@ -62,11 +72,5 @@ public class OrderServiceImpl implements OrderService {
         }).collect(Collectors.toList()));
         OrderDto savedOrder = orderMapper.toDto(orderRepository.save(order));
         savedOrder.setItems(itemList.stream().map(itemMapper::toDto).collect(Collectors.toList()));
-        kafkaTemplate.send("orders", new OrderEvent(
-                "OrderUpdated",
-                order.getId(),
-                savedOrder,
-                Instant.now()));
-        return savedOrder;
     }
 }

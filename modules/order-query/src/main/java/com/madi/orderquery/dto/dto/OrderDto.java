@@ -1,7 +1,6 @@
 package com.madi.orderquery.dto.dto;
 
-import com.madi.ordercommand.db.enums.Currency;
-import com.madi.ordercommand.dto.dto.ItemDto;
+import com.madi.orderquery.db.enums.Currency;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

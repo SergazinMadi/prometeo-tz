@@ -1,4 +1,4 @@
-package com.madi.common.dto.enums;
+package com.madi.orderquery.db.enums;
 
 public enum Currency {
     KZT,
