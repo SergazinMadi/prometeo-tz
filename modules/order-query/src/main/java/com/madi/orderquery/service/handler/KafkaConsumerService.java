@@ -16,7 +16,6 @@ import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -46,31 +45,32 @@ public class KafkaConsumerService {
 
     }
 
-    private void handleCreated(OrderDto orderDto){
-        List<ItemDto> itemDtos = orderDto.getItems();
+    private void handleCreated(OrderDto orderDto) {
         Order order = orderRepository.save(orderMapper.toEntity(orderDto));
-        List<Item> itemList = itemRepository.saveAll(itemDtos.stream().map(i -> {
-            Item item = itemMapper.toEntity(i);
-            item.setOrder(order);
-            return item;
-        }).collect(Collectors.toList()));
-        OrderDto savedOrder = orderMapper.toDto(order);
-        savedOrder.setItems(itemList.stream().map(itemMapper::toDto).collect(Collectors.toList()));
+        processItems(orderDto.getItems(), order);
     }
 
-
-    private void handleUpdated(OrderDto orderDto, UUID orderId){
+    private void handleUpdated(OrderDto orderDto, UUID orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(EntityNotFoundException::new);
-        List<ItemDto> itemDtos = orderDto.getItems();
         order.setCurrency(orderDto.getCurrency());
         order.setCustomerId(orderDto.getCustomerId());
         itemRepository.deleteAllByOrder(order);
-        List<Item> itemList = itemRepository.saveAll(itemDtos.stream().map(i -> {
-            Item item = itemMapper.toEntity(i);
-            item.setOrder(order);
-            return item;
-        }).collect(Collectors.toList()));
-        OrderDto savedOrder = orderMapper.toDto(orderRepository.save(order));
-        savedOrder.setItems(itemList.stream().map(itemMapper::toDto).collect(Collectors.toList()));
+        Order updatedOrder = orderRepository.save(order);
+        processItems(orderDto.getItems(), updatedOrder);
     }
+
+    private void processItems(List<ItemDto> itemDtos, Order order) {
+        List<Item> itemList = itemRepository.saveAll(
+                itemDtos.stream().map(i -> {
+                    Item item = itemMapper.toEntity(i);
+                    item.setOrder(order);
+                    return item;
+                }).collect(Collectors.toList())
+        );
+        OrderDto savedOrder = orderMapper.toDto(order);
+        savedOrder.setItems(
+                itemList.stream().map(itemMapper::toDto).collect(Collectors.toList())
+        );
+    }
+
 }

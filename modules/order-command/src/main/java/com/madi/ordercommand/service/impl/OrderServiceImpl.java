@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,43 +30,46 @@ public class OrderServiceImpl implements OrderService {
     private final ItemMapper itemMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    public UUID createOrder(OrderDto orderDto){
-        List<ItemDto> itemDtos = orderDto.getItems();
+    public UUID createOrder(OrderDto orderDto) {
         Order order = orderRepository.save(orderMapper.toEntity(orderDto));
-        List<Item> itemList = itemRepository.saveAll(itemDtos.stream().map(i -> {
-            Item item = itemMapper.toEntity(i);
-            item.setOrder(order);
-            return item;
-        }).collect(Collectors.toList()));
-        OrderDto savedOrder = orderMapper.toDto(order);
-        savedOrder.setItems(itemList.stream().map(itemMapper::toDto).collect(Collectors.toList()));
-        kafkaTemplate.send("orders", new OrderEvent(
-                "OrderCreated",
-                order.getId(),
-                savedOrder,
-                Instant.now()));
+        List<Item> itemList = saveItemsWithOrder(orderDto.getItems(), order);
+        sendKafkaEvent("OrderCreated", order, itemList);
         return order.getId();
     }
 
+
     @Transactional
-    public OrderDto updateOrder(OrderDto orderDto, UUID orderId){
+    public OrderDto updateOrder(OrderDto orderDto, UUID orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(EntityNotFoundException::new);
-        List<ItemDto> itemDtos = orderDto.getItems();
         order.setCurrency(orderDto.getCurrency());
         order.setCustomerId(orderDto.getCustomerId());
         itemRepository.deleteAllByOrder(order);
-        List<Item> itemList = itemRepository.saveAll(itemDtos.stream().map(i -> {
-            Item item = itemMapper.toEntity(i);
-            item.setOrder(order);
-            return item;
-        }).collect(Collectors.toList()));
-        OrderDto savedOrder = orderMapper.toDto(orderRepository.save(order));
-        savedOrder.setItems(itemList.stream().map(itemMapper::toDto).collect(Collectors.toList()));
-        kafkaTemplate.send("orders", new OrderEvent(
-                "OrderUpdated",
-                order.getId(),
-                savedOrder,
-                Instant.now()));
-        return savedOrder;
+        List<Item> itemList = saveItemsWithOrder(orderDto.getItems(), order);
+        order = orderRepository.save(order);
+        sendKafkaEvent("OrderUpdated", order, itemList);
+        return orderMapper.toDto(order);
     }
+
+
+    private List<Item> saveItemsWithOrder(List<ItemDto> itemDtos, Order order) {
+        return itemRepository.saveAll(
+                itemDtos.stream().map(i -> {
+                    Item item = itemMapper.toEntity(i);
+                    item.setOrder(order);
+                    return item;
+                }).collect(Collectors.toList())
+        );
+    }
+
+    private void sendKafkaEvent(String eventType, Order order, List<Item> items) {
+        OrderDto orderDto = orderMapper.toDto(order);
+        orderDto.setItems(items.stream().map(itemMapper::toDto).collect(Collectors.toList()));
+        kafkaTemplate.send("orders", new OrderEvent(
+                eventType,
+                order.getId(),
+                orderDto,
+                LocalDateTime.now()
+        ));
+    }
+
 }

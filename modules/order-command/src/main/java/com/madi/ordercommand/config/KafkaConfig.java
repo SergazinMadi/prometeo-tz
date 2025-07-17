@@ -15,10 +15,8 @@ import java.util.Map;
 @Configuration
 public class KafkaConfig {
 
-    @Value("${KAFKA_SERVER}")
+    @Value("${KAFKA_SERVER:localhost:9092}")
     private String BOOTSTRAP_SERVERS;
-    private static final String GROUP_ID = "order-command";
-
 
     @Bean
     public Map<String, Object> producerConfigs() {

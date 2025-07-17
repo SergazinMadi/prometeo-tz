@@ -15,11 +15,6 @@ import java.util.UUID;
 public class OrderController {
     private final OrderService orderService;
 
-    @GetMapping
-    public String test(){
-        return "hi";
-    }
-
     @PostMapping
     public ResponseEntity<UUID> createOrder(@RequestBody OrderDto orderDto){
         return ResponseEntity.created(URI.create("/orders")).body(orderService.createOrder(orderDto));
