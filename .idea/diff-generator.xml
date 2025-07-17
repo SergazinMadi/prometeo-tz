@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DiffGenerationConfig">
+    <option name="sourceModelValue" value="order-command:order-command" />
+    <option name="targetDbValue" value="08667ca1-eda4-4c75-81f7-c46460ff82d1__order_command_db_public" />
+  </component>
+</project>

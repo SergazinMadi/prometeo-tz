@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: order-command
+  datasource:
+    url: jdbc:postgresql://localhost:5432/order_command_db
+    username: postgres
+    password: Nadi.3344
+
+  jpa:
+    show-sql: true
+
+  flyway:
+    enabled: true
+    url: jdbc:postgresql://localhost:5432/order_command_db
+    user: postgres
+    password: Nadi.3344
+    baseline-on-migrate: true
+    schemas:
+      - public
+    locations: classpath:db/migration
+
+logging:
+  level:
+    org.flywaydb: DEBUG
+
+server:
+  port: 8080

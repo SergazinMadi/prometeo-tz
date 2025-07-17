@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: order-query
+  datasource:
+    url: jdbc:postgresql://localhost:5432/order_query_db
+    username: postgres
+    password: Nadi.3344
+
+  jpa:
+    show-sql: true
+
+server:
+  port: 8082
