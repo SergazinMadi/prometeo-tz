@@ -24,6 +24,7 @@ public class OrderServiceImpl implements OrderService {
     private final ItemRepository itemRepository;
     private final ItemMapper itemMapper;
 
+    @Override
     public OrderDto getOrderById(UUID orderId){
         Order order = orderRepository.findById(orderId).orElseThrow(EntityNotFoundException::new);
         OrderDto orderDto = orderMapper.toDto(order);

@@ -59,8 +59,6 @@ services:
       POSTGRES_PASSWORD: Pass.1234
     ports:
       - 5433:5432
-#    volumes:
-#      - pgdata-command:/var/lib/postgresql/data
     networks:
       - kafka-network
 
@@ -73,8 +71,6 @@ services:
       POSTGRES_PASSWORD: Pass.1234
     ports:
       - 5434:5432
-#    volumes:
-#      - pgdata-query:/var/lib/postgresql/data
     networks:
       - kafka-network
 
@@ -107,6 +103,7 @@ services:
       - "8081:8081"
     depends_on:
       - postgres-query
+      - broker
     environment:
       - DB_HOST=postgres-query
       - DB_PORT=5432

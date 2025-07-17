@@ -30,6 +30,7 @@ public class OrderServiceImpl implements OrderService {
     private final ItemMapper itemMapper;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
+    @Override
     public UUID createOrder(OrderDto orderDto) {
         Order order = orderRepository.save(orderMapper.toEntity(orderDto));
         List<Item> itemList = saveItemsWithOrder(orderDto.getItems(), order);
@@ -39,6 +40,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Transactional
+    @Override
     public OrderDto updateOrder(OrderDto orderDto, UUID orderId) {
         Order order = orderRepository.findById(orderId).orElseThrow(EntityNotFoundException::new);
         order.setCurrency(orderDto.getCurrency());
