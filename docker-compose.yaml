@@ -74,11 +74,13 @@ services:
     networks:
       - kafka-network
 
+#  common:
+#    image: sausaq/common:latest
+#    ports:
+#      - "8080:8080"
+
   order-command:
-    image: order_command
-    build:
-      context: ./modules/order-command
-      dockerfile: Dockerfile
+    image: sausaq/order-command:latest
     ports:
       - "8080:8080"
     depends_on:
@@ -95,10 +97,7 @@ services:
       - kafka-network
 
   order-query:
-    image: order_query
-    build:
-      context: ./modules/order-query
-      dockerfile: Dockerfile
+    image: sausaq/order-query:latest
     ports:
       - "8081:8081"
     depends_on:
