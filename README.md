@@ -1,4 +1,5 @@
-<img width="1085" height="702" alt="diagram" src="https://github.com/user-attachments/assets/e0bb37d7-853e-4b4f-8dfa-12f090b3b828" />
+<img width="1085" height="702" alt="diagram2" src="https://github.com/user-attachments/assets/f47e1ed2-8300-47bd-b777-57fe4446eba1" />
+
 
 # English version
 
